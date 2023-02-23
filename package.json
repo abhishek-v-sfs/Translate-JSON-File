@@ -1,6 +1,6 @@
 {
   "name": "translate-json-file",
-  "version": "1.0.41.0.4",
+  "version": "1.0.4",
   "main": "index.js",
   "bin": "index.js",
   "scripts": {
@@ -12,8 +12,5 @@
     "clipboardy": "^3.0.0",
     "inquirer": "^9.1.4",
     "playwright": "^1.31.1"
-  },
-  "dependencies": {
-    "translate-json-file": "^1.0.0"
   }
 }
