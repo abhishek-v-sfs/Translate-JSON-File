@@ -18,6 +18,8 @@ function getLocale(language) {
       return "fr";
     case "SPANISH":
       return "es";
+    case "KANNADA":
+      return "kn";
     default:
       return "en";
   }
@@ -69,7 +71,7 @@ function flatten(object, addToList, prefix) {
       type: "list",
       name: "language",
       message: "Select language",
-      choices: ["FRENCH", "SPANISH"],
+      choices: ["KANNADA", "FRENCH", "SPANISH"],
     },
   ]);
 
