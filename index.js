@@ -1,7 +1,7 @@
-#!/usr/local/bin/node
+#!/usr/bin/env node
+
 import { chromium } from "playwright";
 import inquirer from "inquirer";
-import clipboardy from "clipboardy";
 import { readFileSync, writeFileSync } from "fs";
 import lodash from "lodash";
 import cliProgress from "cli-progress";
@@ -44,6 +44,8 @@ function flatten(object, addToList, prefix) {
 }
 (async () => {
   let moduleEnJson;
+
+  console.log("Installing playwright...");
   const { stdout } = await execAsync("npx playwright install");
 
   const a = await inquirer.prompt([
@@ -106,19 +108,24 @@ function flatten(object, addToList, prefix) {
     if (clear) {
       await page.getByRole("button", { name: "Clear source text" }).click();
     }
-    await page
-      .getByRole("combobox", { name: "Source text" })
-      .fill(pageKeys.map((key) => lodash.get(engJson, key)).join("\n"));
+
+    const stringToTranslate =
+      "dwerewerwerw " +
+      pageKeys.map((key) => lodash.get(engJson, key)).join("\n"); //add a random string to get the translation
 
     await page
-      .getByRole("button", { name: "Copy translation" })
-      .first()
-      .click();
+      .getByRole("combobox", { name: "Source text" })
+      .fill(stringToTranslate);
+
+    await page.getByRole("button", { name: "Copy translation" }).textContent(); //wait for the translation to be completed
+    let string = await page.getByText("dwerewerwerw").last().textContent();
+
+    string = string.replace(/dwerewerwerw /i, ""); //remove the random string
+    string = lodash.upperFirst(string); // capitalize the first letter
 
     completed += pageKeys.length;
 
     bar1.update(completed);
-    const string = await clipboardy.read();
 
     string.split("\n").forEach((string, index) => {
       const key = pageKeys[index];
