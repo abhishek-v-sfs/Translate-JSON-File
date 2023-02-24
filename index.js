@@ -7,6 +7,7 @@ import lodash from "lodash";
 import cliProgress from "cli-progress";
 import { promisify } from "util";
 import { exec } from "child_process";
+import ora from "ora";
 
 const execAsync = promisify(exec);
 
@@ -44,13 +45,24 @@ function flatten(object, addToList, prefix) {
   });
   return addToList;
 }
+
+async function configure() {
+  const spinner = ora({
+    color: "yellow",
+    text: "Installing Playwright",
+  }).start();
+
+  const { stdout } = await execAsync("npx playwright install");
+
+  spinner.succeed("Successfully installed Playwright");
+}
+
 (async () => {
   let moduleEnJson;
 
-  console.log("Installing playwright...");
-  const { stdout } = await execAsync("npx playwright install");
+  await configure();
 
-  const a = await inquirer.prompt([
+  const sourceAndLanguage = await inquirer.prompt([
     {
       type: "input",
       name: "sourcePath",
@@ -76,19 +88,22 @@ function flatten(object, addToList, prefix) {
   ]);
 
   const browser = await chromium.launch({
-    headless: true,
+    headless: false,
   });
   const page = await browser.newPage();
 
   const engJson = flatten(moduleEnJson, [], "");
-  let frJson = {};
+  let translatedJson = {};
 
-  bar1.start(Object.keys(engJson).length, 0);
-  let completed = 0;
+  const totalItemsToTranslate = Object.keys(engJson).length;
+
+  bar1.start(totalItemsToTranslate, 0);
+
+  let completedCount = 0;
 
   await page.goto(
     `https://translate.google.com/?sl=auto&tl=${getLocale(
-      a.language
+      sourceAndLanguage.language
     )}&op=translate`
   );
 
@@ -96,52 +111,57 @@ function flatten(object, addToList, prefix) {
 
   await page.waitForTimeout(2000);
 
-  let clear = false;
-  const paginated = [];
+  let shouldClearPreviousInput = false;
+  const paginatedJson = [];
 
   Object.keys(engJson).forEach((key, index) => {
     if (index % 50 === 0) {
-      paginated.push([]);
+      paginatedJson.push([]);
     }
-    paginated[paginated.length - 1].push(key);
+    paginatedJson[paginatedJson.length - 1].push(key);
   });
 
-  for (const pageKeys of paginated) {
-    if (clear) {
+  for (const pageKeys of paginatedJson) {
+    if (shouldClearPreviousInput) {
       await page.getByRole("button", { name: "Clear source text" }).click();
     }
 
+    const placeHolderText = "'API'";
+
     const stringToTranslate =
-      "dwerewerwerw " +
-      pageKeys.map((key) => lodash.get(engJson, key)).join("\n"); //add a random string to get the translation
+      `${placeHolderText} ` +
+      pageKeys.map((key) => lodash.get(engJson, key)).join("\n\n"); //add a random string to get the translation
 
     await page
       .getByRole("combobox", { name: "Source text" })
       .fill(stringToTranslate);
 
     await page.getByRole("button", { name: "Copy translation" }).textContent(); //wait for the translation to be completed
-    let string = await page.getByText("dwerewerwerw").last().textContent();
+    let string = await page
+      .getByText(`${placeHolderText}`)
+      .last()
+      .textContent();
 
-    string = string.replace(/dwerewerwerw /i, ""); //remove the random string
+    string = string.replace(placeHolderText, ""); //remove the random string
     string = lodash.upperFirst(string); // capitalize the first letter
 
-    completed += pageKeys.length;
+    completedCount += pageKeys.length;
 
-    bar1.update(completed);
+    bar1.update(completedCount);
 
-    string.split("\n").forEach((string, index) => {
+    string.split("\n\n").forEach((string, index) => {
       const key = pageKeys[index];
-      lodash.set(frJson, key, string);
+      lodash.set(translatedJson, key, string);
     });
 
-    clear = true;
+    shouldClearPreviousInput = true;
   }
 
-  const json = {};
-  for (const key in frJson) {
-    if (Object.hasOwnProperty.call(frJson, key)) {
-      const element = frJson[key];
-      lodash.set(json, key, element);
+  const finalJson = {};
+  for (const key in translatedJson) {
+    if (Object.hasOwnProperty.call(translatedJson, key)) {
+      const element = translatedJson[key];
+      lodash.set(finalJson, key, element);
     }
   }
 
@@ -149,7 +169,7 @@ function flatten(object, addToList, prefix) {
 
   bar1.stop();
 
-  const b = await inquirer.prompt([
+  const destination = await inquirer.prompt([
     {
       type: "input",
       name: "destinationPath",
@@ -165,6 +185,12 @@ function flatten(object, addToList, prefix) {
       },
     },
   ]);
-  writeFileSync(b.destinationPath, JSON.stringify(json, null, 2));
-  console.log(`\x1b[32m%s\x1b[0m`, `File written to ${b.destinationPath}`);
+  writeFileSync(
+    destination.destinationPath,
+    JSON.stringify(finalJson, null, 2)
+  );
+  console.log(
+    `\x1b[32m%s\x1b[0m`,
+    `File written to ${destination.destinationPath}`
+  );
 })();

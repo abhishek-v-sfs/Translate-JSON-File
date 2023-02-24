@@ -3,5 +3,5 @@
 ## Usage
 
 ```bash
- npx translate-json-file
+ npx translate-json-file@latest
 ```

@@ -1,23 +1,47 @@
 {
   "name": "translate-json-file",
-  "version": "1.1.3",
+  "version": "1.1.7",
   "main": "index.js",
   "bin": "index.js",
+  "description": "Translate JSON file using Google Translate",
+  "author": "Abhishek V <abhishekv.dev@gmail.com> (https://github.com/abhi0498)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/abhi0498/Translate-JSON-File.git"
+  },
   "scripts": {
-    "start": "echo hello && node index.js"
+    "start": "node index.js"
   },
   "keywords": [
     "translate",
     "json",
     "file",
     "google",
-    "translate"
+    "translate",
+    "language",
+    "translation",
+    "translate-json-file",
+    "translate-json",
+    "translate-file",
+    "translate-json-file-cli",
+    "translate-json-cli",
+    "json-language",
+    "json-translation",
+    "json-translate",
+    "json-translate-cli",
+    "json-translate-file",
+    "json-translate-file-cli",
+    "json-translate-language",
+    "json-translate-translation",
+    "json-translate-json-file",
+    "json-translate-json-file-cli"
   ],
   "type": "module",
   "license": "MIT",
   "dependencies": {
     "cli-progress": "^3.12.0",
     "inquirer": "^9.1.4",
+    "ora": "^6.1.2",
     "playwright": "^1.31.1"
   }
 }
